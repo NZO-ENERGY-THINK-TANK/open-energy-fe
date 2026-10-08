@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same ref supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Track .nvmrc so CI and Amplify Hosting use the same Node version.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      # OPEN_ENERGY_API_KEY is read per-request in app/api/backend/[...path]/route.ts,
+      # never at build time, so the build needs no secrets. `next build` also
+      # type-checks, which is why there is no separate tsc step.
+      - run: yarn build
+
+  lint:
+    name: Lint (advisory)
+    runs-on: ubuntu-latest
+    # next.config.js sets eslint.ignoreDuringBuilds, and eslint-config-next (13.5.1)
+    # trails next (15.5.9) by three majors, so lint reports but must not block merges.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn lint
