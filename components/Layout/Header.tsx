@@ -15,8 +15,8 @@ const navItems = [
 ];
 const otherNavItems = [
   { id: 'predictions', label: 'תחזיות והשוואות' },
-  { id: 'climate', label: 'אקלים' },
-  { id: 'emissions', label: 'פליטות CO2' },
+  // { id: 'climate', label: 'אקלים' }, TODO: Noga
+  // { id: 'emissions', label: 'פליטות CO2' }, TODO: Noga
   { id: 'renewable-energy', label: 'אנרגיות מתחדשות' },
   { id: '#electricity-sector', label: 'משק החשמל' },
 ];
