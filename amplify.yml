@@ -16,8 +16,10 @@ frontend:
     build:
       commands:
         - nvm use
-        # Expose server-side secrets to the Next.js server runtime
-        - env | grep -e OPEN_ENERGY_API_KEY >> .env.production
+        # Expose server-side secrets to the Next.js server runtime. A bare grep
+        # exits 1 when nothing matches, which fails the build with no message,
+        # so say which variables the console is missing.
+        - "env | grep -E '^(OPEN_ENERGY_API_KEY)=' >> .env.production || { echo 'ERROR: expected variables are not set in the Amplify console'; exit 1; }"
         - yarn build
   artifacts:
     baseDirectory: .next
