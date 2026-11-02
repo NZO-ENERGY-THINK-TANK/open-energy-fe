@@ -16,7 +16,7 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const UPSTREAM_ORIGIN = 'https://api.open-energy.madebyomnis.com';
+const UPSTREAM_ORIGIN = process.env.UPSTREAM_ORIGIN;
 const ROUTE_PREFIX = '/api/backend';
 
 // Response headers worth passing back to the browser. Content-Disposition
@@ -41,14 +41,16 @@ const fetchUpstream = async (url: string, apiKey: string, accept: string): Promi
 
   let response = await fetch(url, init);
 
-  // The backend answers a trailing-slash mismatch with a 307 whose Location is
-  // plain http://. Follow it once ourselves so the key never travels
-  // unencrypted.
+  // Follow trailing-slash redirects once, using only their path and query.
+  // Keep the configured upstream's scheme and host so local HTTP works,
+  // production HTTPS stays encrypted, and the key never goes to another host.
   if (response.status >= 300 && response.status < 400) {
     const location = response.headers.get('location');
     if (location) {
-      const target = new URL(location, url);
-      target.protocol = 'https:';
+      const redirectUrl = new URL(location, url);
+      const target = new URL(url);
+      target.pathname = redirectUrl.pathname;
+      target.search = redirectUrl.search;
       response = await fetch(target.toString(), init);
     }
   }
@@ -57,6 +59,13 @@ const fetchUpstream = async (url: string, apiKey: string, accept: string): Promi
 };
 
 export async function GET(request: Request) {
+  if (!UPSTREAM_ORIGIN) {
+    return NextResponse.json(
+      { error: 'UPSTREAM_ORIGIN is not configured on the server' },
+      { status: 503 },
+    );
+  }
+
   const apiKey = process.env.OPEN_ENERGY_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
