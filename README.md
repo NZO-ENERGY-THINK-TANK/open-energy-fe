@@ -36,7 +36,7 @@ docker run --rm -it -v "$PWD":/app -w /app -p 3000:3000 node:24 bash
 Inside the container:
 
 ```
-yarn install --frozen-lockfile
+yarn install --immutable
 yarn dev -H 0.0.0.0
 ```
 
